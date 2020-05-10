@@ -6,6 +6,7 @@ import os
 import pathlib
 import split_folders
 
+from keras.optimizers import SGD
 from keras.layers import Activation, Dense, Dropout, Conv2D, Flatten, AveragePooling2D
 from keras.models import Sequential
 from keras.preprocessing.image import ImageDataGenerator
@@ -75,13 +76,13 @@ training_set = train_datagen.flow_from_directory(
     './data/train',
     target_size=(64, 64),
     batch_size=32,
-    class_mode='categorical',
+    class_mode='binary',
     shuffle=False)
 test_set = test_datagen.flow_from_directory(
     './data/val',
     target_size=(64, 64),
     batch_size=32,
-    class_mode='categorical',
+    class_mode='binary',
     shuffle=False)
 
 # CNN модель, не знаю шо значать ці леєри но цю хуйню нам нада (CNN model)
@@ -107,17 +108,18 @@ model.add(Dense(64))
 model.add(Activation('relu'))
 model.add(Dropout(rate=0.5))
 # Output layer
-model.add(Dense(2))
+model.add(Dense(1))
 model.add(Activation('softmax'))
 model.summary()
 
-model.compile(optimizer="sgd", loss="categorical_crossentropy", metrics=['accuracy'])
+sgd = SGD(lr=0.01, momentum=0.9)
+model.compile(optimizer=sgd, loss="binary_crossentropy", metrics=['accuracy'])
 
 # Запускаємо модель (start model)
 model.fit_generator(
     training_set,
-    steps_per_epoch=50,
-    epochs=5,
+    steps_per_epoch=100,
+    epochs=2,
     validation_data=test_set,
     validation_steps=200)
 
@@ -126,7 +128,6 @@ model.evaluate_generator(generator=test_set, steps=50)
 
 test_set.reset()
 pred = model.predict_generator(test_set, steps=50, verbose=1)
-
 predicted_class_indices = np.argmax(pred, axis=1)
 
 labels = training_set.class_indices
