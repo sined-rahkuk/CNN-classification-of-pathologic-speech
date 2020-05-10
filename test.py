@@ -8,7 +8,6 @@ import split_folders
 
 from keras.layers import Activation, Dense, Dropout, Conv2D, Flatten, AveragePooling2D
 from keras.models import Sequential
-from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
 
 PATH_TO_DATA = "wav_data"
@@ -112,14 +111,6 @@ model.add(Dense(2))
 model.add(Activation('softmax'))
 model.summary()
 
-# epochs = 200
-# batch_size = 8
-# learning_rate = 0.01
-# decay_rate = learning_rate / epochs
-# momentum = 0.9  # Хз шо це, но похоже на заклінаніє із гарі потера
-#
-# # Stochastic Gradient Descent це для треніровки, но тут можна і другу модель іспользувати
-# sgd = SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=False)
 model.compile(optimizer="sgd", loss="categorical_crossentropy", metrics=['accuracy'])
 
 # Запускаємо модель (start model)
