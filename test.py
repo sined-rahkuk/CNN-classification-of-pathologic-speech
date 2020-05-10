@@ -50,12 +50,10 @@ for g in ['healthy', 'pathological']:
     print('Creating png from wav')
     pathlib.Path(f'img_data/{g}').mkdir(parents=True, exist_ok=True)  # Создасть папку img_data
     for filename in os.listdir(f'./{PATH_TO_DATA}/{g}'):
-        if filename and filename.find('.png') != -1:
-            continue
-        songname = f'./{PATH_TO_DATA}/{g}/{filename}'
-        y, sr = librosa.load(songname, mono=True, duration=10)
+        sample = f'./{PATH_TO_DATA}/{g}/{filename}'
+        y, sr = librosa.load(sample, mono=True)
         plt.specgram(y, NFFT=2048, Fs=2, Fc=0, noverlap=128, sides='default', mode='default',
-                     scale='dB')
+                     scale='dB', cmap="inferno")
         plt.axis('off')
         plt.savefig(f'img_data/{g}/{filename[:-3].replace(".", "")}.png')
         plt.clf()
@@ -76,13 +74,13 @@ training_set = train_datagen.flow_from_directory(
     './data/train',
     target_size=(64, 64),
     batch_size=32,
-    class_mode='binary',
+    class_mode='categorical',
     shuffle=False)
 test_set = test_datagen.flow_from_directory(
     './data/val',
     target_size=(64, 64),
     batch_size=32,
-    class_mode='binary',
+    class_mode='categorical',
     shuffle=False)
 
 # CNN модель, не знаю шо значать ці леєри но цю хуйню нам нада (CNN model)
@@ -108,12 +106,12 @@ model.add(Dense(64))
 model.add(Activation('relu'))
 model.add(Dropout(rate=0.5))
 # Output layer
-model.add(Dense(1))
+model.add(Dense(2))
 model.add(Activation('softmax'))
 model.summary()
 
 sgd = SGD(lr=0.01, momentum=0.9)
-model.compile(optimizer=sgd, loss="binary_crossentropy", metrics=['accuracy'])
+model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=['accuracy'])
 
 # Запускаємо модель (start model)
 model.fit_generator(
@@ -129,12 +127,17 @@ model.evaluate_generator(generator=test_set, steps=50)
 test_set.reset()
 pred = model.predict_generator(test_set, steps=50, verbose=1)
 predicted_class_indices = np.argmax(pred, axis=1)
-
+print(predicted_class_indices)
 labels = training_set.class_indices
+print(labels)
 labels = dict((v, k) for k, v in labels.items())
+print(labels)
 predictions = [labels[k] for k in predicted_class_indices]
+print(predictions)
 filenames = test_set.filenames
+print(filenames)
 predictions = predictions[:len(filenames)]
+print(predictions)
 
 results = pd.DataFrame({"Filename": filenames, "Predictions": predictions})
 results.to_csv("prediction_results.csv", index=False)
