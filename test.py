@@ -10,6 +10,7 @@ from keras.optimizers import SGD
 from keras.layers import Activation, Dense, Dropout, Conv2D, Flatten, AveragePooling2D
 from keras.models import Sequential
 from keras.preprocessing.image import ImageDataGenerator
+from tensorflow import metrics
 
 PATH_TO_DATA = "wav_data"
 
@@ -47,16 +48,16 @@ PATH_TO_DATA = "wav_data"
 
 # Іспользуємо цю хуйню шоб конвертірувати аудіо файл у .png шоб потом його аналізірувати (converts WAV to png)
 for g in ['healthy', 'pathological']:
-    print('Creating png from wav')
-    pathlib.Path(f'img_data/{g}').mkdir(parents=True, exist_ok=True)  # Создасть папку img_data
-    for filename in os.listdir(f'./{PATH_TO_DATA}/{g}'):
-        sample = f'./{PATH_TO_DATA}/{g}/{filename}'
-        y, sr = librosa.load(sample, mono=True)
-        plt.specgram(y, NFFT=2048, Fs=2, Fc=0, noverlap=128, sides='default', mode='default',
-                     scale='dB', cmap="inferno")
-        plt.axis('off')
-        plt.savefig(f'img_data/{g}/{filename[:-3].replace(".", "")}.png')
-        plt.clf()
+	print('Creating png from wav')
+	pathlib.Path(f'img_data/{g}').mkdir(parents=True, exist_ok=True)  # Создасть папку img_data
+	for filename in os.listdir(f'./{PATH_TO_DATA}/{g}'):
+		sample = f'./{PATH_TO_DATA}/{g}/{filename}'
+		y, sr = librosa.load(sample, mono=True)
+		plt.specgram(y, NFFT=2048, Fs=2, Fc=0, noverlap=128, sides='default', mode='default',
+		             scale='dB', cmap="inferno")
+		plt.axis('off')
+		plt.savefig(f'img_data/{g}/{filename[:-3].replace(".", "")}.png')
+		plt.clf()
 
 # 80 процетів хуйні для треніровки і 20 процентів хуйні для тестів (test(20) and train(80) data)
 print('Split all data to train and test')
@@ -64,24 +65,24 @@ split_folders.ratio('./img_data/', output="./data", seed=1337, ratio=(.8, .2))
 
 # Керасовська залупа яка рандомно мутірує пнгшку і получаються ліпші дата для треніровки
 train_datagen = ImageDataGenerator(
-    rescale=1. / 255,  # rescale all pixel values from 0-255, so after this step all our pixel values are in range (0,1)
-    shear_range=0.2,  # to apply some random transformations
-    zoom_range=0.2,  # to apply zoom
-    horizontal_flip=True)  # image will be flipper horiz
+	rescale=1. / 255,  # rescale all pixel values from 0-255, so after this step all our pixel values are in range (0,1)
+	shear_range=0.2,  # to apply some random transformations
+	zoom_range=0.2,  # to apply zoom
+	horizontal_flip=True)  # image will be flipper horiz
 test_datagen = ImageDataGenerator(rescale=1. / 255)
 
 training_set = train_datagen.flow_from_directory(
-    './data/train',
-    target_size=(64, 64),
-    batch_size=32,
-    class_mode='categorical',
-    shuffle=False)
+	'./data/train',
+	target_size=(64, 64),
+	batch_size=8,
+	class_mode='categorical',
+	shuffle=False)
 test_set = test_datagen.flow_from_directory(
-    './data/val',
-    target_size=(64, 64),
-    batch_size=32,
-    class_mode='categorical',
-    shuffle=False)
+	'./data/val',
+	target_size=(64, 64),
+	batch_size=8,
+	class_mode='categorical',
+	shuffle=False)
 
 # CNN модель, не знаю шо значать ці леєри но цю хуйню нам нада (CNN model)
 model = Sequential()
@@ -111,15 +112,15 @@ model.add(Activation('softmax'))
 model.summary()
 
 sgd = SGD(lr=0.01, momentum=0.9)
-model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=['accuracy'])
+model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=[metrics.Accuracy(), metrics.Precision(), metrics.Recall()])
 
 # Запускаємо модель (start model)
 model.fit_generator(
-    training_set,
-    steps_per_epoch=100,
-    epochs=50,
-    validation_data=test_set,
-    validation_steps=200)
+	training_set,
+	steps_per_epoch=18,
+	epochs=50,
+	validation_data=test_set,
+	validation_steps=200)
 
 # Це вже лиш результати (results)
 model.evaluate_generator(generator=test_set, steps=50)
