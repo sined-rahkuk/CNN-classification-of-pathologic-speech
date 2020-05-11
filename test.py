@@ -6,7 +6,6 @@ import os
 import pathlib
 import split_folders
 
-from keras.optimizers import SGD
 from keras.layers import Activation, Dense, Dropout, Conv2D, Flatten, AveragePooling2D
 from keras.models import Sequential
 from keras.preprocessing.image import ImageDataGenerator
@@ -54,7 +53,7 @@ for g in ['healthy', 'pathological']:
 		sample = f'./{PATH_TO_DATA}/{g}/{filename}'
 		y, sr = librosa.load(sample, mono=True)
 		plt.specgram(y, NFFT=2048, Fs=2, Fc=0, noverlap=128, sides='default', mode='default',
-		             scale='dB', cmap="inferno")
+		             scale='dB', cmap='inferno')
 		plt.axis('off')
 		plt.savefig(f'img_data/{g}/{filename[:-3].replace(".", "")}.png')
 		plt.clf()
@@ -111,8 +110,7 @@ model.add(Dense(2))
 model.add(Activation('softmax'))
 model.summary()
 
-sgd = SGD(lr=0.01, momentum=0.9)
-model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=[metrics.Accuracy(), metrics.Precision(), metrics.Recall()])
+model.compile(optimizer="sgd", loss="categorical_crossentropy", metrics=[metrics.Accuracy(), metrics.Precision(), metrics.Recall()])
 
 # Запускаємо модель (start model)
 model.fit_generator(
@@ -128,17 +126,13 @@ model.evaluate_generator(generator=test_set, steps=50)
 test_set.reset()
 pred = model.predict_generator(test_set, steps=50, verbose=1)
 predicted_class_indices = np.argmax(pred, axis=1)
-print(predicted_class_indices)
+
 labels = training_set.class_indices
-print(labels)
 labels = dict((v, k) for k, v in labels.items())
-print(labels)
+
 predictions = [labels[k] for k in predicted_class_indices]
-print(predictions)
 filenames = test_set.filenames
-print(filenames)
 predictions = predictions[:len(filenames)]
-print(predictions)
 
 results = pd.DataFrame({"Filename": filenames, "Predictions": predictions})
 results.to_csv("prediction_results.csv", index=False)
