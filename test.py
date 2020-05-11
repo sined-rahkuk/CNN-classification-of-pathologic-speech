@@ -6,7 +6,6 @@ import os
 import pathlib
 import split_folders
 
-from keras.optimizers import SGD
 from keras.layers import Activation, Dense, Dropout, Conv2D, Flatten, AveragePooling2D
 from keras.models import Sequential
 from keras.preprocessing.image import ImageDataGenerator
